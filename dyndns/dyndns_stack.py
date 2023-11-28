@@ -12,9 +12,10 @@ class DyndnsStack(cdk.Stack):
      
         
         #Create dynamoDB table
-        table = dynamodb.Table(self, "dyndns_db",
+        table = dynamodb.TableV2(self, "dyndns_db",
             partition_key=dynamodb.Attribute(name="hostname", type=dynamodb.AttributeType.STRING),
-            removal_policy=cdk.RemovalPolicy.DESTROY
+            removal_policy=cdk.RemovalPolicy.DESTROY,
+            billing=dynamodb.Billing.on_demand()
         )
         
         #Create Lambda role
@@ -53,7 +54,7 @@ class DyndnsStack(cdk.Stack):
 
 
         fn = lambda_.Function(self, "dyndns_fn",
-            runtime=lambda_.Runtime.PYTHON_3_11,
+            runtime=lambda_.Runtime.PYTHON_3_12,
             architecture=lambda_.Architecture.ARM_64,
             handler="index.lambda_handler",
             code=lambda_.Code.from_asset("lambda"),
@@ -61,7 +62,8 @@ class DyndnsStack(cdk.Stack):
             #Provide DynammoDB table name as enviroment variable
             environment={
                 "ddns_config_table":table.table_name
-            }
+            },
+            timeout=cdk.Duration.minutes(1)
         )            
 
         #Create FunctionURL for invocation - principal will be set to * as it required for invocation from any HTTP client

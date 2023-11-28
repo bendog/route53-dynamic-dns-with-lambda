@@ -15,7 +15,10 @@ import re
 import hashlib
 import boto3
 import os
+import logging
 from botocore.exceptions import ClientError
+
+logger = logging.getLogger(__name__)
 
 '''
 This function pulls the json config data from DynamoDB and returns a python dictionary.
@@ -188,8 +191,12 @@ The function that Lambda executes. It contains the main script logic, calls and 
 
 def lambda_handler(event, context):
     # Get execution mode and source IP
+    logger.info("Start.")
     execution_mode = json.loads(event['body'])['execution_mode']
     source_ip = event['requestContext']['http']['sourceIp']
+
+    logger.info(f"{execution_mode=}")
+    logger.info(f"{source_ip=}")
 
     # Verify that the execution mode was set correctly.
     execution_modes = ('set', 'get')
@@ -216,6 +223,8 @@ def lambda_handler(event, context):
     # This Lambda function always exits as a success
     # and passes success or failure information in the json message.
     # return json.loads(return_dict)
+
+    logger.info("End.")
 
     return {
         "statusCode": return_dict[0],

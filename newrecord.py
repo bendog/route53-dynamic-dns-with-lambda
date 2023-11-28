@@ -1,5 +1,9 @@
 import time
 import boto3
+import logging
+
+logger = logging.getLogger(__name__)
+
 route53 = boto3.client('route53')
 dynamodb = boto3.client('dynamodb')
 awslambda = boto3.client('lambda')
@@ -20,8 +24,10 @@ except:
 
 # Get dynamodb table name and Lambda Function URL
 resources = cloudformation.list_stack_resources(StackName='DyndnsStack')
+logger.info("get statck")
 for resource in resources['StackResourceSummaries']:
-    if resource['ResourceType'] == 'AWS::DynamoDB::Table':
+    logger.warning(resource)
+    if resource['ResourceType'] == 'AWS::DynamoDB::GlobalTable':
         table = resource['PhysicalResourceId']
     if resource['ResourceType'] == 'AWS::Lambda::Function':
         lambdafn = resource['PhysicalResourceId']
@@ -134,9 +140,10 @@ if confirm == 'y':
         print("./dyndns.sh -m set -u "+lambdaurl +
               " -h "+hostname+" -s "+secret)
         print('\n##########################################################################################\n')
-    except:
+    except Exception as e:
         print("Could not save configuration.")
-        exit()
+        logger.exception(e)
+        exit(9)
 else:
     print('Aborting.')
     if newhz:
